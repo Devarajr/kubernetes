@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: newdep
+   namespace: testns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+       type: web
+       state: prod
+  template:
+     metadata:
+        name: webpod
+        namespace: testns
+        labels:
+          type: web
+          state: prod
+     spec:
+       containers:
+       - image: sajinibm/mar15:webv1
+         imagePullPolicy: Always
+         name: eduweb
+         ports:
+         - containerPort: 80
+           name: webserver
+           protocol: TCP
+         resources:
+             limits:
+               cpu: 900m
+               memory: 900Mi
+             requests:
+               cpu: 700m
+               memory: 700Mi
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: newsvc
+    namespace: testns
+spec:
+  type: NodePort
+  ports:
+  - name: tstsrc
+    port: 8000
+    protocol: TCP
+    targetPort: 80
+  selector:
+     type: web
+     state: prod

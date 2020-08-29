@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: testdep
+spec:
+  replicas: 2
+  selector:
+     matchLabels:
+       type: uiserver
+  template:
+     metadata:
+        name: podtmp
+        labels:
+          type: uiserver
+     spec:
+      containers:
+      - image: sajinibm/mar15:webv1
+        imagePullPolicy: Always
+        name: webcon
+        ports:
+        - containerPort: 80
+          name: webserver
+          protocol: TCP 
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: testsrv
+spec:
+  type: NodePort
+  ports:
+  - name: tstsrc
+    port: 8000
+    protocol: TCP
+    targetPort: 80
+  selector:
+     type: uiserver

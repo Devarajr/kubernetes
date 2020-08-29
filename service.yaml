@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: testsrv
+    namespace: chn
+spec:
+  type: NodePort
+  ports:
+  - name: tstsrc
+    nodePort: 30005
+    port: 8000
+    protocol: TCP
+    targetPort: 80
+  selector:
+     type: web

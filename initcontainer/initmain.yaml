@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Pod
+metadata:
+   name: multiconpod
+   namespace: chn
+   labels:
+     type: httpapp
+spec:
+  volumes:
+   - name: mediadata
+     persistentVolumeClaim:
+        claimName: httpvol
+  initContainers:
+  - name: bootstrap
+    image: sajinibm/mar15:init
+    imagePullPolicy: Always
+  containers:
+  - name: httpcontainer
+    image: sajinibm/mar15:mainwebimg
+    imagePullPolicy: Always
+    ports:
+    - containerPort: 80
+      name: http
+      protocol: TCP
+    resources:
+      requests:
+         cpu: 300m
+         memory: 300Mi
+      limits:
+         cpu: 500m
+         memory: 500Mi
+    volumeMounts:
+     - mountPath: /var/www/html
+       name: mediadata
+  - name: supportcon
+    image: sajinibm/mar15:sidecarwebimg
+    imagePullPolicy: Always
+    volumeMounts:
+     - mountPath: /data
+       name: mediadata
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: testsrv
+    namespace: chn
+spec:
+  type: NodePort
+  ports:
+  - name: tstsrc
+    port: 8000
+    protocol: TCP
+    targetPort: 80
+  selector:
+     type: httpapp

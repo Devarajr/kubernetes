@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: mongovol
+    namespace: testns
+spec:
+  accessModes:
+     - ReadWriteMany
+  resources:
+     limits:
+       storage: 3Gi
+     requests:
+       storage: 2Gi
+  storageClassName: datapool
+
+---
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+   name: mongodb
+   namespace: testns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+       type: mongodb
+       state: prod
+  serviceName: mongosvc
+  template:
+     metadata:
+        name: mongopod
+        namespace: testns
+        labels:
+          type: mongodb
+          state: prod
+     spec:
+       volumes:
+       - name: mpersvol
+         persistentVolumeClaim:
+             claimName: mongovol
+       containers:
+       - image: sajinibm/mar15:prodbv1
+         imagePullPolicy: Always
+         name: mdbcon
+         ports:
+         - containerPort: 27017
+           name: dbserver
+           protocol: TCP
+         resources:
+             limits:
+               cpu: 1
+               memory: 1Gi
+             requests:
+               cpu: 800m
+               memory: 900Mi
+         volumeMounts:
+         - mountPath: /db/data
+           name: mpersvol
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: javanotedb
+    namespace: testns
+spec:
+  ports:
+  - name: mdb
+    port: 27017
+    protocol: TCP
+    targetPort: 27017
+  selector:
+     type: mongodb
+     state: prod
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+   name: jdep
+   namespace: testns
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+       type: javaweb
+       state: prod
+  template:
+     metadata:
+        name: jweb
+        namespace: testns
+        labels:
+          type: javaweb
+          state: prod
+     spec:
+       containers:
+       - image: sajinibm/mar15:javappv1
+         imagePullPolicy: Always
+         name: jwebcon
+         ports:
+         - containerPort: 8080
+           name: webport
+           protocol: TCP
+         resources:
+             limits:
+               cpu: 900m
+               memory: 900Mi
+             requests:
+               cpu: 700m
+               memory: 700Mi
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: javaappsvc
+    namespace: testns
+spec:
+  type: NodePort
+  ports:
+  - name: jsrc
+    port: 8000
+    protocol: TCP
+    targetPort: 8080
+  selector:
+     type: javaweb
+     state: prod
+

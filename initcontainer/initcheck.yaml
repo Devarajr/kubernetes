@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Pod
+metadata:
+   name: testpod
+   namespace: chn
+   labels:
+     type: web
+spec:
+  containers:
+  - name: testcontainer
+    image: sajinibm/mar15:webv1
+    imagePullPolicy: Always
+    ports:
+    - containerPort: 80
+      name: http
+      protocol: TCP
+    resources:
+      requests:
+         cpu: 300m
+         memory: 300Mi
+      limits:
+         cpu: 500m
+         memory: 500Mi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+    name: chnsrc
+    namespace: chn
+spec:
+  type: NodePort
+  ports:
+  - name: tstsrc
+    port: 8000
+    protocol: TCP
+    targetPort: 80
+  selector:
+     type: web
